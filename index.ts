@@ -19,10 +19,10 @@ export type ActionLike<Node extends HTMLElement> = (
  */
 export type Action<
   Node extends HTMLElement = HTMLElement,
-  Params extends unknown = undefined
+  Params = unknown
 > = (node: Node, params?: Params) => ActionReturn<Params>;
 
-const useLocalStorage: Action = (node, keyName: string) => {
+const useLocalStorage: Action<HTMLInputElement, string> = (node, keyName) => {
   if (!(node instanceof HTMLInputElement)) {
       return
   }
