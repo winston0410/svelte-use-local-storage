@@ -1,3 +1,6 @@
+import storageOk from 'storage-available'
+//  Taken from this repo, as these types should be merged to core later
+//  https://github.com/paolotiu/svelte-useactions/blob/main/src/index.ts
 /**
  * The return type of an action.
  */
@@ -22,11 +25,12 @@ export type Action<
   Params = unknown
 > = (node: Node, params?: Params) => ActionReturn<Params>;
 
-const useLocalStorage: Action<HTMLInputElement, string> = (node, keyName) => {
-  if (!(node instanceof HTMLInputElement)) {
+type InputElement = HTMLInputElement | HTMLTextAreaElement
+
+const useLocalStorage: Action<InputElement, string> = (node, keyName) => {
+  if (!storageOk('localStorage')) {
       return
   }
-    
   const saved = localStorage.getItem(keyName)
   node.value = saved
 
