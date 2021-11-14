@@ -47,6 +47,7 @@ const storageOk = (type: Storage) => {
 
 const useLocalStorage: Action<InputElement, string> = (node, keyName) => {
   if (!storageOk('localStorage')) {
+      console.warn("localStorage is not supported by the current browser.")
       return
   }
   const saved = localStorage.getItem(keyName)
