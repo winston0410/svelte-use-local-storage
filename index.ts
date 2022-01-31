@@ -1,17 +1,17 @@
 // REF https://github.com/sveltejs/kit/issues/1549
 // NOTE Importing cjs module is broken right now in Vite
-//  import storageOk from 'storage-available'
-import type { Action } from 'svelte-action-type'
+import type { Action } from "svelte-action-type";
 
 type GroupElement = HTMLFieldSetElement;
 type InputElement = HTMLInputElement | HTMLTextAreaElement;
-type PersistableElement = InputElement | GroupElement;
+type PersistableElement = InputElement | GroupElement | HTMLElement;
 
 type Storage = "localStorage" | "sessionStorage";
 
+//  import storageOk from 'storage-available'
 const storageOk = (type: Storage) => {
   try {
-    var storage = window[type],
+    const storage = window[type],
       x = "__storage_test__";
     storage.setItem(x, x);
     storage.removeItem(x);
@@ -31,6 +31,12 @@ const setInput: ValueSetter<InputElement> = (node, keyName) => {
   node.value = saved;
 };
 
+// TODO Should exclude InputElement and GroupElement here
+const setInnerHTML: ValueSetter<HTMLElement> = (node, keyName) => {
+  const saved = localStorage.getItem(keyName);
+  node.innerText = saved;
+};
+
 const setRadio: ValueSetter<GroupElement> = (node, keyName) => {
   const savedKey = localStorage.getItem(keyName);
   const targetButton = ([...node.elements] as Array<HTMLInputElement>).find(
@@ -42,22 +48,10 @@ const setRadio: ValueSetter<GroupElement> = (node, keyName) => {
   }
 };
 
-const useLocalStorage: Action<PersistableElement, string> = (node, keyName) => {
-  if (!storageOk("localStorage")) {
-    console.warn("localStorage is not supported by the current browser.");
-    return;
-  }
-
-  switch (node.tagName.toLowerCase()) {
-    case "fieldset":
-      setRadio(node as GroupElement, keyName);
-      break;
-
-    default:
-      setInput(node as InputElement, keyName);
-      break;
-  }
-
+const mountInputElementHandler: ValueSetter<InputElement | GroupElement> = (
+  node,
+  keyName
+) => {
   const handleChange = (e: InputEvent) => {
     localStorage.setItem(keyName, (e.target as HTMLInputElement).value);
   };
@@ -69,6 +63,42 @@ const useLocalStorage: Action<PersistableElement, string> = (node, keyName) => {
       node.removeEventListener("change", handleChange);
     },
   };
+};
+
+const mountNormalElementHandler: ValueSetter<HTMLElement> = (node, keyName) => {
+  const observer = new MutationObserver(function () {
+    localStorage.setItem(keyName, node.innerText);
+  });
+
+  observer.observe(node, { attributes: false, childList: true });
+  return {
+    destroy() {
+      observer.disconnect();
+    },
+  };
+};
+
+const useLocalStorage: Action<PersistableElement, string> = (node, keyName) => {
+  if (!storageOk("localStorage")) {
+    console.warn("localStorage is not supported by the current browser.");
+    return;
+  }
+
+  switch (node.tagName.toLowerCase()) {
+    case "fieldset":
+      setRadio(node as GroupElement, keyName);
+      return mountInputElementHandler(node as GroupElement, keyName);
+
+    case "input":
+    case "textarea":
+      setInput(node as InputElement, keyName);
+      return mountInputElementHandler(node as InputElement, keyName);
+
+    // NOTE For all other HTML elements
+    default:
+      setInnerHTML(node as HTMLElement, keyName);
+      return mountNormalElementHandler(node as HTMLElement, keyName);
+  }
 };
 
 export default useLocalStorage;
