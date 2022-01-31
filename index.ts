@@ -34,7 +34,9 @@ const setInput: ValueSetter<InputElement> = (node, keyName) => {
 // TODO Should exclude InputElement and GroupElement here
 const setInnerHTML: ValueSetter<HTMLElement> = (node, keyName) => {
   const saved = localStorage.getItem(keyName);
-  node.innerText = saved;
+  if(saved){
+      node.innerText = saved;
+  }
 };
 
 const setRadio: ValueSetter<GroupElement> = (node, keyName) => {
