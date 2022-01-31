@@ -72,6 +72,7 @@ const mountNormalElementHandler: ValueSetter<HTMLElement> = (node, keyName) => {
     localStorage.setItem(keyName, node.textContent);
   });
 
+  // REF https://stackoverflow.com/questions/40195514/mutation-observer-not-detecting-text-change
   observer.observe(node, {
     characterData: true,
     attributes: false,
