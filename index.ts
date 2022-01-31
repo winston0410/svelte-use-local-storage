@@ -34,8 +34,8 @@ const setInput: ValueSetter<InputElement> = (node, keyName) => {
 // TODO Should exclude InputElement and GroupElement here
 const setInnerHTML: ValueSetter<HTMLElement> = (node, keyName) => {
   const saved = localStorage.getItem(keyName);
-  if(saved){
-      node.innerText = saved;
+  if (saved) {
+    node.textContent = saved;
   }
 };
 
@@ -69,10 +69,15 @@ const mountInputElementHandler: ValueSetter<InputElement | GroupElement> = (
 
 const mountNormalElementHandler: ValueSetter<HTMLElement> = (node, keyName) => {
   const observer = new MutationObserver(function () {
-    localStorage.setItem(keyName, node.innerText);
+    localStorage.setItem(keyName, node.textContent);
   });
 
-  observer.observe(node, { attributes: false, childList: true });
+  observer.observe(node, {
+    characterData: true,
+    attributes: false,
+    childList: false,
+    subtree: true,
+  });
   return {
     destroy() {
       observer.disconnect();
