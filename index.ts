@@ -20,26 +20,38 @@ const storageOk = (type: Storage) => {
   }
 };
 
-type ValueSetter<T extends PersistableElement> = (
-  node: T,
-  keyName: string
-) => void;
-
-const setInput: ValueSetter<InputElement> = (node, keyName) => {
-  const saved = localStorage.getItem(keyName);
-  node.value = saved;
+type ValueSetterArgs<T extends PersistableElement> = {
+  node: T;
+  name: string;
+  initValue: string;
 };
 
-// TODO Should exclude InputElement and GroupElement here
-const setInnerHTML: ValueSetter<HTMLElement> = (node, keyName) => {
-  const saved = localStorage.getItem(keyName);
-  if (saved) {
+type ValueSetter<T extends PersistableElement> = (
+  args: ValueSetterArgs<T>
+) => void;
+
+const setInput: ValueSetter<InputElement> = ({ node, name, initValue }) => {
+  const saved = localStorage.getItem(name);
+  if (initValue) {
+    node.value = initValue;
+  } else {
+    node.value = saved;
+  }
+};
+
+// TODO Should exclude InputElement and GroupElement here from the HTMLElement type
+const setInnerHTML: ValueSetter<HTMLElement> = ({ node, name, initValue }) => {
+  const saved = localStorage.getItem(name);
+  if (initValue) {
+    node.textContent = initValue;
+  } else {
     node.textContent = saved;
   }
 };
 
-const setRadio: ValueSetter<GroupElement> = (node, keyName) => {
-  const savedKey = localStorage.getItem(keyName);
+// TODO Handle initValue for radiogroup
+const setRadio: ValueSetter<GroupElement> = ({ node, name, initValue }) => {
+  const savedKey = localStorage.getItem(name);
   const targetButton = ([...node.elements] as Array<HTMLInputElement>).find(
     (x) => x.value === savedKey
   );
@@ -49,12 +61,16 @@ const setRadio: ValueSetter<GroupElement> = (node, keyName) => {
   }
 };
 
-const mountInputElementHandler: ValueSetter<InputElement | GroupElement> = (
+type HandlerSetter<T extends PersistableElement> = (
+  args: Omit<ValueSetterArgs<T>, "initValue">
+) => void;
+
+const mountInputElementHandler: HandlerSetter<InputElement | GroupElement> = ({
   node,
-  keyName
-) => {
+  name,
+}) => {
   const handleChange = (e: InputEvent) => {
-    localStorage.setItem(keyName, (e.target as HTMLInputElement).value);
+    localStorage.setItem(name, (e.target as HTMLInputElement).value);
   };
 
   node.addEventListener("change", handleChange);
@@ -66,9 +82,12 @@ const mountInputElementHandler: ValueSetter<InputElement | GroupElement> = (
   };
 };
 
-const mountNormalElementHandler: ValueSetter<HTMLElement> = (node, keyName) => {
+const mountNormalElementHandler: HandlerSetter<HTMLElement> = ({
+  node,
+  name,
+}) => {
   const observer = new MutationObserver(function () {
-    localStorage.setItem(keyName, node.textContent);
+    localStorage.setItem(name, node.textContent);
   });
 
   // REF https://stackoverflow.com/questions/40195514/mutation-observer-not-detecting-text-change
@@ -87,12 +106,12 @@ const mountNormalElementHandler: ValueSetter<HTMLElement> = (node, keyName) => {
 
 type ActionProps = {
   name: string;
-  // NOTE Whether value get from localstorage should be set in the element
-  shouldUpdate?: boolean;
+  // NOTE initial value to set on target element
+  initValue?: string;
 };
 
 const defaultOpts = {
-  shouldUpdate: true,
+  initValue: "",
 };
 
 const useLocalStorage: Action<PersistableElement, ActionProps> = (
@@ -104,28 +123,22 @@ const useLocalStorage: Action<PersistableElement, ActionProps> = (
     return;
   }
 
-  const { name, shouldUpdate } = { ...defaultOpts, ...opts };
+  const { name, initValue } = { ...defaultOpts, ...opts };
 
   switch (node.tagName.toLowerCase()) {
     case "fieldset":
-      if (shouldUpdate) {
-        setRadio(node as GroupElement, name);
-      }
-      return mountInputElementHandler(node as GroupElement, name);
+      setRadio({ node: node as GroupElement, name, initValue });
+      return mountInputElementHandler({ node: node as GroupElement, name });
 
     case "input":
     case "textarea":
-      if (shouldUpdate) {
-        setInput(node as InputElement, name);
-      }
-      return mountInputElementHandler(node as InputElement, name);
+      setInput({ node: node as InputElement, name, initValue });
+      return mountInputElementHandler({ node: node as InputElement, name });
 
     // NOTE For all other HTML elements
     default:
-      if (shouldUpdate) {
-        setInnerHTML(node as HTMLElement, name);
-      }
-      return mountNormalElementHandler(node as HTMLElement, name);
+      setInnerHTML({ node: node as HTMLElement, name, initValue });
+      return mountNormalElementHandler({ node: node as HTMLElement, name });
   }
 };
 
