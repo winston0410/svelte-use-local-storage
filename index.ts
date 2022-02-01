@@ -1,6 +1,7 @@
 // REF https://github.com/sveltejs/kit/issues/1549
 // NOTE Importing cjs module is broken right now in Vite
 import type { Action } from "svelte-action-type";
+import { custom_event } from "svelte/internal";
 
 type GroupElement = HTMLFieldSetElement;
 type InputElement = HTMLInputElement | HTMLTextAreaElement;
@@ -91,6 +92,14 @@ const useLocalStorage: Action<PersistableElement, string> = (node, keyName) => {
     console.warn("localStorage is not supported by the current browser.");
     return;
   }
+
+  const event = custom_event("beforesetfromstorage", {
+    shouldSet: true,
+  });
+
+  node.dispatchEvent(event);
+
+  console.log('check event', event)
 
   switch (node.tagName.toLowerCase()) {
     case "fieldset":
