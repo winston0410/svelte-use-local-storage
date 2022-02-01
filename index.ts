@@ -93,13 +93,19 @@ const useLocalStorage: Action<PersistableElement, string> = (node, keyName) => {
     return;
   }
 
-  const event = custom_event("beforesetfromstorage", {
-    shouldSet: true,
-  });
+  const event = custom_event(
+    "beforesetfromstorage",
+    {
+      shouldSet: true,
+    },
+    true
+  );
+
+  event.detail.shouldSet = false;
 
   node.dispatchEvent(event);
 
-  console.log('check event', event)
+  console.log("check event", event.detail);
 
   switch (node.tagName.toLowerCase()) {
     case "fieldset":
