@@ -1,8 +1,6 @@
 // REF https://github.com/sveltejs/kit/issues/1549
 // NOTE Importing cjs module is broken right now in Vite
 import type { Action } from "svelte-action-type";
-import { custom_event } from "svelte/internal";
-
 type GroupElement = HTMLFieldSetElement;
 type InputElement = HTMLInputElement | HTMLTextAreaElement;
 type PersistableElement = InputElement | GroupElement | HTMLElement;
@@ -87,26 +85,47 @@ const mountNormalElementHandler: ValueSetter<HTMLElement> = (node, keyName) => {
   };
 };
 
-const useLocalStorage: Action<PersistableElement, string> = (node, keyName) => {
+type ActionProps = {
+  name: string;
+  // NOTE Whether value get from localstorage should be set in the element
+  shouldUpdate?: boolean;
+};
+
+const defaultOpts = {
+  shouldUpdate: true,
+};
+
+const useLocalStorage: Action<PersistableElement, ActionProps> = (
+  node,
+  opts
+) => {
   if (!storageOk("localStorage")) {
     console.warn("localStorage is not supported by the current browser.");
     return;
   }
 
+  const { name, shouldUpdate } = { ...defaultOpts, ...opts };
+
   switch (node.tagName.toLowerCase()) {
     case "fieldset":
-      setRadio(node as GroupElement, keyName);
-      return mountInputElementHandler(node as GroupElement, keyName);
+      if (shouldUpdate) {
+        setRadio(node as GroupElement, name);
+      }
+      return mountInputElementHandler(node as GroupElement, name);
 
     case "input":
     case "textarea":
-      setInput(node as InputElement, keyName);
-      return mountInputElementHandler(node as InputElement, keyName);
+      if (shouldUpdate) {
+        setInput(node as InputElement, name);
+      }
+      return mountInputElementHandler(node as InputElement, name);
 
     // NOTE For all other HTML elements
     default:
-      setInnerHTML(node as HTMLElement, keyName);
-      return mountNormalElementHandler(node as HTMLElement, keyName);
+      if (shouldUpdate) {
+        setInnerHTML(node as HTMLElement, name);
+      }
+      return mountNormalElementHandler(node as HTMLElement, name);
   }
 };
 
