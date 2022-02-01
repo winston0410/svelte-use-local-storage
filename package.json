@@ -9,7 +9,7 @@
     "dist/"
   ],
   "scripts": {
-    "prepare": "npm run build",
+    "prepare": "husky install && npm run build",
     "build": "node ./esbuild.config.js && $(npm bin)/tsc"
   },
   "keywords": [
@@ -20,6 +20,8 @@
   "devDependencies": {
     "@tsconfig/svelte": "^2.0.1",
     "esbuild": "^0.12.24",
+    "husky": "7.0.4",
+    "lint-staged": "12.3.2",
     "svelte": "3.46.3",
     "svelte-action-type": "git+ssh://git@github.com/winston0410/svelte-action-type.git",
     "typescript": "^4.4.2"
