@@ -20,6 +20,7 @@
   "devDependencies": {
     "@tsconfig/svelte": "^2.0.1",
     "esbuild": "^0.12.24",
+    "svelte": "3.46.3",
     "svelte-action-type": "git+ssh://git@github.com/winston0410/svelte-action-type.git",
     "typescript": "^4.4.2"
   },
