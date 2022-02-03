@@ -128,16 +128,21 @@ const useLocalStorage: Action<PersistableElement, ActionProps> = (
   switch (node.tagName.toLowerCase()) {
     case "fieldset":
       setRadio({ node: node as GroupElement, name, initValue });
+      node.dispatchEvent(new Event("input"));
+      node.dispatchEvent(new Event("change"));
       return mountInputElementHandler({ node: node as GroupElement, name });
 
     case "input":
     case "textarea":
       setInput({ node: node as InputElement, name, initValue });
+      node.dispatchEvent(new Event("input"));
+      node.dispatchEvent(new Event("change"));
       return mountInputElementHandler({ node: node as InputElement, name });
 
     // NOTE For all other HTML elements
     default:
       setInnerHTML({ node: node as HTMLElement, name, initValue });
+      // TODO Find the correct event to dispatch here
       return mountNormalElementHandler({ node: node as HTMLElement, name });
   }
 };
